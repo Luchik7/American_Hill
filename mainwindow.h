@@ -8,6 +8,9 @@
 #include <QAction>
 #include <QPushButton>
 #include <QRect>
+#include <QTimer>
+#include <QDebug>
+#include <QKeyEvent>
 
 struct Point {
     Point(int x, int y) : x(x), y(y){}
@@ -30,11 +33,14 @@ private:
     int currentIndex;
     Point currentPoint;
     Point nextPoint;
+    QTimer* timer;
 
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void paintEvent(QPaintEvent *);
+    void  keyPressEvent(QKeyEvent *event);
+    void  keyReleaseEvent(QKeyEvent *event);
 
 signals:
 
@@ -42,6 +48,8 @@ public slots:
     void moveRight();
     void moveLeft();
     int getY(int x, int k, int b);
+    void increaseSpeed();
+    void decreaseSpeed();
 };
 
 #endif // MAINWINDOW_H
