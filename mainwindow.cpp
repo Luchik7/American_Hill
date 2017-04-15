@@ -10,12 +10,6 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
-    /*
-    scene = new GraphicScene(0, 0, 800, 600);
-    view = new QGraphicsView(scene, this);
-    view->setAlignment(Qt::AlignLeft | Qt::AlignTop);
-    setCentralWidget(view);
-    */
     points.push_back(Point(0, 0));
     points.push_back(Point(1, 1));
     points.push_back(Point(2, 3));
@@ -32,12 +26,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     nextPoint = points[1];
     currentIndex = 1;
 
-    //currentPointIndex = 0;
-    //currentPosition = QRect(0, 0, 100, 30);
-
     button = new QPushButton("Animated Button", this);
     button->show();
-
+    button->setFocusPolicy(Qt::NoFocus);
 
     animation = new QPropertyAnimation(button, "geometry");
     animation->setDuration(10000);
@@ -45,15 +36,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         animation->setKeyValueAt(0.1 * i, QRect(points[i].x * 100, points[i].y * 100, 100, 30));
     }
 
-    //QShortcut* moveRightShortcut = new QShortcut(Qt::Key_Right, this);
-    //connect(moveRightShortcut, SIGNAL(activated()), this, SLOT(moveRight()));
-
-
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(moveRight()));
-    timer->start(20);
-
-    //currentPosition = QRect(points[points.size() - 1].x * 100, points[points.size() - 1].y * 100, 100, 30);
+    interval = 20;
+    direction = RIGHT;
+    state = MOVE;
+    a = 1;
+    QTimer::singleShot(interval, this, SLOT(move()));
 
     animation1 = new QPropertyAnimation(button, "geometry");
     animation1->setDuration(5000);
@@ -61,12 +48,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     for (auto i = 0; i < points.size(); i++) {
         animation1->setKeyValueAt(0.1 * i, QRect(points[points.size() - i - 1].x * 100, points[points.size() - i - 1].y * 100, 100, 30));
     }
-
-    QShortcut* moveLeftShortcut = new QShortcut(Qt::Key_Left, this);
-    connect(moveLeftShortcut, SIGNAL(activated()), this, SLOT(moveLeft()));
-    //animation->start();
-
-
 }
 
 MainWindow::~MainWindow()
@@ -86,33 +67,54 @@ void MainWindow::paintEvent(QPaintEvent *)
     }
     painter.setPen(Qt::blue);
     painter.drawPath(path);
-
-
-
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event)
 {
-    qDebug() << 132;
-    if (event->key()==Qt::Key_Right) {
-        decreaseSpeed();
+    if (event->isAutoRepeat()) {
+        return;
     }
+    if (event->key() == Qt::Key_Right) {
+        interval = 20;
+    }
+    else if (event->key() == Qt::Key_Left) {
+        interval = 20;
+    }
+
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-    qDebug() << 132;
-    if (event->key()==Qt::Key_Right) {
-        increaseSpeed();
+    if (event->isAutoRepeat()) {
+        return;
+    }
+    if (event->key() == Qt::Key_Right) {
+        direction = RIGHT;
+        if (state == STOP) {
+            state = MOVE;
+            move();
+        }
+        a = 1;
+        interval = 5;
+    }
+    else if(event->key() == Qt::Key_Left) {
+        direction = LEFT;
+        if (state == STOP) {
+            state = MOVE;
+            move();
+        }
+        a = -1;
+        interval = 5;
     }
 }
 
-void MainWindow::moveRight()
+void MainWindow::move()
 {
-
-    if (currentIndex > 10){
+    if ((currentIndex > 10 && direction == RIGHT) || (currentIndex < 0 && direction == LEFT)){
+        state = STOP;
         return;
     }
+
 
     int x1 = currentPoint.x * 100;
     int y1 = currentPoint.y * 100;
@@ -122,32 +124,35 @@ void MainWindow::moveRight()
 
     int k = (y2 -  y1) / (x2 - x1);
     int b = y1 - x1 * k;
-    int x = button->geometry().x() + 1;
+    int x = button->geometry().x() + a;
     int y = getY(x, k, b);
 
-    if(x >= x2) {
-        currentIndex++;
-        if (currentIndex > 10){
-            return;
+    if (direction == RIGHT){
+        if(x >= x2) {
+            currentIndex++;
+            if (currentIndex > 10){
+                state = STOP;
+                return;
+            }
+            currentPoint = nextPoint;
+            nextPoint = points[currentIndex];
         }
-        currentPoint = nextPoint;
-        nextPoint = points[currentIndex];
+     }
+    else {
+        if(x <= x2){
+            currentIndex--;
+            if (currentIndex < 0){
+                state = STOP;
+                return;
+            }
+            currentPoint = nextPoint;
+            nextPoint = points[currentIndex];
+
+        }
     }
 
-//    int k = 0;
-//    int b = 0;
-//    int x = 0;
-//    double y = 0;
-//    for (auto i = 0; i < points.size()-1; i++){
-//        k = (points[i+1].y * 100 - points[i].y * 100) / (points[i+1].x * 100 - points[i].x* 100);
-//        b = points[i].y * 100 - points[i].x * 100 * k;
-//        x = points[i].x;
-//        y = getY(x, k, b);
-//        button->setGeometry(QRect(x, y, 100, 30));
-//    }
-
     button->setGeometry(QRect(x, y, 100, 30));
-
+    QTimer::singleShot(interval, this, SLOT(move()));
 
 }
 
@@ -163,16 +168,16 @@ int MainWindow::getY(int x, int k, int b)
 
 void MainWindow::increaseSpeed()
 {
-    timer->stop();
-    timer->setInterval(10);
-    timer->start();
+    //timer->stop();
+    //timer->setInterval(10);
+    //timer->start();
 }
 
 void MainWindow::decreaseSpeed()
 {
-    timer->stop();
-    timer->setInterval(20);
-    timer->start();
+    //timer->stop();
+    //timer->setInterval(20);
+    //timer->start();
 }
 
 

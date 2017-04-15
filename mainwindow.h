@@ -34,7 +34,12 @@ private:
     Point currentPoint;
     Point nextPoint;
     QTimer* timer;
-
+    int interval;
+    int direction;
+    int a;
+    int state;
+    enum {LEFT, RIGHT};
+    enum {MOVE, STOP};
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -45,7 +50,7 @@ public:
 signals:
 
 public slots:
-    void moveRight();
+    void move();
     void moveLeft();
     int getY(int x, int k, int b);
     void increaseSpeed();
