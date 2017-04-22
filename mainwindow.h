@@ -36,9 +36,13 @@ private:
     QTimer* timer;
     int interval;
     int direction;
+    int oldDirection;
     int a;
     int state;
-    enum {LEFT, RIGHT};
+    int high;
+    int dot;
+    int up_y;
+    enum {LEFT, RIGHT, UP, DOWN};
     enum {MOVE, STOP};
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -51,10 +55,8 @@ signals:
 
 public slots:
     void move();
-    void moveLeft();
     int getY(int x, int k, int b);
-    void increaseSpeed();
-    void decreaseSpeed();
+
 };
 
 #endif // MAINWINDOW_H

@@ -37,9 +37,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     }
 
     interval = 20;
+    oldDirection = RIGHT;
     direction = RIGHT;
     state = MOVE;
     a = 1;
+    high = 0;
+    dot = 0;
+    up_y = 0;
     QTimer::singleShot(interval, this, SLOT(move()));
 
     animation1 = new QPropertyAnimation(button, "geometry");
@@ -81,6 +85,16 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
         interval = 20;
     }
 
+    else if(event->key() == Qt::Key_S){
+        interval = 20;
+        state = MOVE;
+        move();
+    }
+
+    else if(event->key() == Qt::Key_Up){
+        direction = DOWN;
+    }
+
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -90,22 +104,37 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     }
     if (event->key() == Qt::Key_Right) {
         direction = RIGHT;
+        a = 1;
+        interval = 5;
         if (state == STOP) {
             state = MOVE;
             move();
         }
-        a = 1;
-        interval = 5;
     }
     else if(event->key() == Qt::Key_Left) {
         direction = LEFT;
+        a = -1;
+        interval = 5;
         if (state == STOP) {
             state = MOVE;
             move();
         }
-        a = -1;
-        interval = 5;
     }
+
+    else if(event->key() == Qt::Key_S){
+        interval = 100000;
+        state = STOP;
+    }
+
+    else if(event->key() == Qt::Key_Up) {
+        if (direction == RIGHT or direction == LEFT) {
+            oldDirection = direction;
+            direction = UP;
+            up_y = button->geometry().y();
+            interval = 2;
+        }
+    }
+
 }
 
 void MainWindow::move()
@@ -115,39 +144,64 @@ void MainWindow::move()
         return;
     }
 
+    int x = button->geometry().x(), y = button->geometry().y();
 
-    int x1 = currentPoint.x * 100;
-    int y1 = currentPoint.y * 100;
-
-    int x2 = nextPoint.x * 100;
-    int y2 = nextPoint.y * 100;
-
-    int k = (y2 -  y1) / (x2 - x1);
-    int b = y1 - x1 * k;
-    int x = button->geometry().x() + a;
-    int y = getY(x, k, b);
-
-    if (direction == RIGHT){
-        if(x >= x2) {
-            currentIndex++;
-            if (currentIndex > 10){
-                state = STOP;
-                return;
-            }
-            currentPoint = nextPoint;
-            nextPoint = points[currentIndex];
+    if (direction == UP) {
+        if (button->geometry().y() > up_y - 100) {
+            y = button->geometry().y() - 1;
         }
-     }
-    else {
-        if(x <= x2){
-            currentIndex--;
-            if (currentIndex < 0){
-                state = STOP;
-                return;
-            }
-            currentPoint = nextPoint;
-            nextPoint = points[currentIndex];
+        else {
+            direction = DOWN;
+        }
+        x = button->geometry().x();
 
+    }
+    else if (direction == DOWN) {
+        if (button->geometry().y() < up_y) {
+            y = button->geometry().y() + 1;
+        }
+        else {
+            direction = oldDirection;
+            interval = 20;
+        }
+        x = button->geometry().x();
+    }
+    else {
+        int x1 = currentPoint.x * 100;
+        int y1 = currentPoint.y * 100;
+
+        int x2 = nextPoint.x * 100;
+        int y2 = nextPoint.y * 100;
+
+        int k = (y2 -  y1) / (x2 - x1);
+        int b = y1 - x1 * k;
+        x = button->geometry().x() + a;
+        y = getY(x, k, b);
+
+        if (direction == RIGHT){
+            if(x >= x2) {
+                currentIndex++;
+                if (currentIndex > 10){
+                    state = STOP;
+                    currentIndex = 10;
+                    return;
+                }
+                currentPoint = nextPoint;
+                nextPoint = points[currentIndex];
+            }
+         }
+        else if(direction == LEFT){
+            if(x <= x2){
+                currentIndex--;
+                if (currentIndex < 0){
+                    state = STOP;
+                    currentIndex = 0;
+                    return;
+                }
+                currentPoint = nextPoint;
+                nextPoint = points[currentIndex];
+
+            }
         }
     }
 
@@ -156,28 +210,12 @@ void MainWindow::move()
 
 }
 
-void MainWindow::moveLeft()
-{
-    animation1->start();
-}
+
 
 int MainWindow::getY(int x, int k, int b)
 {
     return k * x + b;
 }
 
-void MainWindow::increaseSpeed()
-{
-    //timer->stop();
-    //timer->setInterval(10);
-    //timer->start();
-}
-
-void MainWindow::decreaseSpeed()
-{
-    //timer->stop();
-    //timer->setInterval(20);
-    //timer->start();
-}
 
 
