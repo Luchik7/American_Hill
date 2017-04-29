@@ -4,14 +4,19 @@ CONFIG += c++11
 
 HEADERS += \
     vagon.h \
-    mainwindow.h \
-    graphicscene.h
+    graphicscene.h \
+    game.h \
+    mainwindow.h
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp \
-    graphicscene.cpp
+    graphicscene.cpp \
+    game.cpp \
+    mainwindow.cpp
 
 RESOURCES += \
     resource.qrc
+
+FORMS += \
+    mainwindow.ui
 
